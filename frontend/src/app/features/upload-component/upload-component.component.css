@@ -1,0 +1,79 @@
+.stored-files {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.file-list {
+    margin-top: 10px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #f8f9fa;
+}
+
+.file-item.selected {
+    background-color: #e7f3ff;
+    border-color: #b3d7ff;
+}
+
+.file-select {
+    margin-right: 15px;
+}
+
+.file-info {
+    flex-grow: 1;
+}
+
+.file-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.file-details {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.file-details span {
+    margin-right: 15px;
+}
+
+.remove-btn {
+    padding: 4px 8px;
+    margin-left: 10px;
+}
+
+.instructions {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.instructions ul {
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.instructions li {
+    margin-bottom: 8px;
+    color: #666;
+}
+
+.process-btn {
+    margin-top: 15px;
+    width: 100%;
+}

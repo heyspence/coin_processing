@@ -1,0 +1,22 @@
+.two-column-flex-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    gap: 10px;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.left-column {
+    flex: 1;
+    background-color: #f0f0f0;
+    padding: 20px;
+}   
+
+.right-column {
+    flex: 1;
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+

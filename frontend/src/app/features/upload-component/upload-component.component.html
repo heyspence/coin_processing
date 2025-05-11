@@ -1,0 +1,62 @@
+<div class="upload-component">
+    <div class="two-column-flex-container">
+        <div class="left-column">
+            <!-- File Input with Button -->
+            <input type="file" 
+                   (change)="onFileSelected($event)" 
+                   class="btn btn-primary" 
+                   accept=".csv">
+
+            <!-- Stored Files List -->
+            <div class="stored-files" *ngIf="storedFiles.length > 0">
+                <h3>Available Files</h3>
+                <div class="file-list">
+                    <div *ngFor="let storedFile of storedFiles; let i = index" 
+                         class="file-item"
+                         [class.selected]="storedFile.selected">
+                        
+                        <!-- Checkbox for selection -->
+                        <div class="file-select">
+                            <input type="checkbox" 
+                                   [checked]="storedFile.selected"
+                                   (change)="toggleFileSelection(i)">
+                        </div>
+
+                        <!-- File Information -->
+                        <div class="file-info">
+                            <div class="file-name">{{ storedFile.file.name }}</div>
+                            <div class="file-details">
+                                <span>{{ formatFileSize(storedFile.file.size) }}</span>
+                                <span>{{ formatDate(storedFile.uploadDate) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Remove Button -->
+                        <button class="btn btn-sm btn-danger remove-btn" 
+                                (click)="removeFile(i)">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Process Button (commented out for now) -->
+                <!-- <button class="btn btn-success process-btn"
+                        [disabled]="!storedFiles.some(f => f.selected)"
+                        (click)="processSelectedFiles()">
+                    Process Selected Files
+                </button> -->
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="instructions">
+                <h3>Instructions</h3>
+                <ul>
+                    <li>Upload one or more CSV files</li>
+                    <li>Select files you want to process</li>
+                    <li>Processing functionality coming soon!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
