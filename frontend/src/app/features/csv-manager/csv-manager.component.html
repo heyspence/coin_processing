@@ -5,7 +5,8 @@
             <input type="file" 
                    (change)="onFileSelected($event)" 
                    class="btn btn-primary" 
-                   accept=".csv">
+                   accept=".csv"
+                   multiple>
 
             <!-- Stored Files List -->
             <div class="stored-files" *ngIf="storedFiles.length > 0">
@@ -38,13 +39,6 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Process Button (commented out for now) -->
-                <!-- <button class="btn btn-success process-btn"
-                        [disabled]="!storedFiles.some(f => f.selected)"
-                        (click)="processSelectedFiles()">
-                    Process Selected Files
-                </button> -->
             </div>
         </div>
 
@@ -52,11 +46,22 @@
             <div class="instructions">
                 <h3>Instructions</h3>
                 <ul>
-                    <li>Upload one or more CSV files</li>
-                    <li>Select files you want to process</li>
-                    <li>Processing functionality coming soon!</li>
+                    <li>Upload one or more CSV files (you can select multiple files at once)</li>
+                    <li>All files must have the same column structure as the first file</li>
+                    <li>Check the box next to a file to display its data in the table below</li>
+                    <li>You can select multiple files to view their combined data</li>
+                    <li>You can remove files using the ✕ button</li>
                 </ul>
             </div>
         </div>
     </div>
+    <!-- CSV Table (now inside upload component) -->
+    <csv-table
+      *ngIf="showTable"
+      [csvData]="selectedCsvData"
+      [headers]="headers"
+      [allSelected]="allSelected"
+      (rowSelectionChange)="onRowSelectionChange($event)"
+      (selectAllChange)="onSelectAllChange($event)">
+    </csv-table>
 </div>

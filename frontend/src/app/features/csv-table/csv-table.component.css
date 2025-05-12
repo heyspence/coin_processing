@@ -1,0 +1,102 @@
+.csv-table-container {
+    margin-top: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.table-header {
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.line-count {
+    font-weight: 600;
+    color: #495057;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.csv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.csv-table th,
+.csv-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.column-header,
+.column-cell {
+    position: relative;
+}
+
+.header-content,
+.cell-content {
+    white-space: nowrap;
+}
+
+/* Custom scrollbar for the table wrapper */
+.table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.csv-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.csv-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.csv-table td {
+    color: #212529;
+}
+
+/* Add horizontal scroll for many columns */
+.csv-table-container {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.select-col {
+    width: 40px;
+    text-align: center;
+}
+
+.csv-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+} 

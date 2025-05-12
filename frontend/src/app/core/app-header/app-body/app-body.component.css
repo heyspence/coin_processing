@@ -1,22 +1,41 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
 .two-column-flex-container {
     display: flex;
     justify-content: space-between;
-    padding: 20px;
     gap: 10px;
     max-width: 1500px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .left-column {
     flex: 1;
     background-color: #f0f0f0;
     padding: 20px;
+    border-radius: 5px;
 }   
 
 .right-column {
     flex: 1;
     background-color: #f0f0f0;
     padding: 20px;
+    border-radius: 5px;
+}
+
+/* Ensure the table component takes full width */
+csv-table {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
 }
 
 

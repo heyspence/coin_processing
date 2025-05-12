@@ -1,0 +1,36 @@
+<div class="csv-table-container" *ngIf="csvData.length > 0">
+    <div class="table-header">
+        <div class="line-count">Total Records: {{ csvData.length }}</div>
+    </div>
+    <div class="table-wrapper">
+        <table class="csv-table">
+            <thead>
+                <tr>
+                    <!-- Selection column header -->
+                    <th class="column-header select-col">
+                        <input type="checkbox" [checked]="allSelected" (change)="toggleSelectAll($event)" />
+                    </th>
+                    <th *ngFor="let header of headers" class="column-header">
+                        <div class="header-content">{{ header }}</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of csvData; let i = index">
+                    <!-- Selection checkbox for each row -->
+                    <td class="column-cell select-col">
+                        <input type="checkbox" [(ngModel)]="row['selected']" [ngModelOptions]="{standalone: true}" (ngModelChange)="onRowCheckboxModelChange($event, row, i)" />
+                    </td>
+                    <td *ngFor="let header of headers" class="column-cell">
+                        <div class="cell-content">
+                            <ng-container *ngIf="header.toLowerCase().includes('photo') || header.toLowerCase().includes('image'); else textCell">
+                                <img *ngIf="row[header]" [src]="row[header]" width="90" height="90" style="object-fit:contain; border:1px solid #ccc; border-radius:4px;" alt="photo" />
+                            </ng-container>
+                            <ng-template #textCell>{{ row[header] }}</ng-template>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div> 
