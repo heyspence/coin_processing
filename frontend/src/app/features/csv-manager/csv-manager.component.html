@@ -64,4 +64,7 @@
       (rowSelectionChange)="onRowSelectionChange($event)"
       (selectAllChange)="onSelectAllChange($event)">
     </csv-table>
+    <button class="btn btn-success" style="margin-top: 16px;" (click)="generatePDF()" *ngIf="selectedCsvData.length > 0">
+      Generate PDF
+    </button>
 </div>

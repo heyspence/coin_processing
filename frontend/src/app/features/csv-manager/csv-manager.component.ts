@@ -2,6 +2,7 @@ import { Component, signal } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CsvTableComponent } from '../csv-table/csv-table.component';
+import jsPDF from 'jspdf';
 
 interface StoredFile {
     file: File;
@@ -13,6 +14,14 @@ interface StoredFile {
 interface CsvData {
     [key: string]: string | boolean;
     selected: boolean;
+}
+
+// Add rarity level enum
+enum RarityLevel {
+    COMMON = 'green',
+    UNCOMMON = 'yellow',
+    RARE = 'red',
+    ULTRA_RARE = 'purple'
 }
 
 @Component({
@@ -191,5 +200,151 @@ export class CsvManagerComponent {
     updateAllSelected() {
         const data = this.selectedCsvData;
         this.allSelected = data.length > 0 && data.every(row => row['selected'] === true);
+    }
+
+    private determineRarityLevel(coin: CsvData): RarityLevel {
+        // Extract values, handling potential missing or invalid data
+        const year = parseInt(String(coin['Year'] || '0'));
+        const usdValue = parseFloat(String(coin['USD (CoinSnap)'] || '0').replace(/[^0-9.]/g, ''));
+        const grading = String(coin['Grading'] || '').toUpperCase();
+
+        // Initialize score
+        let rarityScore = 0;
+
+        // Year-based scoring (older coins are rarer)
+        if (year < 1900) rarityScore += 3;
+        else if (year < 1950) rarityScore += 2;
+        else if (year < 2000) rarityScore += 1;
+
+        // USD Value-based scoring (CoinSnap)
+        if (usdValue > 30) rarityScore += 3;
+        else if (usdValue > 20) rarityScore += 2;
+        else if (usdValue > 10) rarityScore += 1;
+
+        // Grading-based scoring
+        if (grading.includes('MS') || grading.includes('PF')) {
+            if (grading.includes('70') || grading.includes('69')) rarityScore += 3;
+            else if (grading.includes('68') || grading.includes('67')) rarityScore += 2;
+            else if (grading.includes('66') || grading.includes('65')) rarityScore += 1;
+        }
+
+        // Determine rarity level based on total score
+        if (rarityScore >= 6) return RarityLevel.ULTRA_RARE;
+        if (rarityScore >= 4) return RarityLevel.RARE;
+        if (rarityScore >= 2) return RarityLevel.UNCOMMON;
+        return RarityLevel.COMMON;
+    }
+
+    generatePDF() {
+        // Only include selected coins
+        const selected = this.selectedCsvData.filter(row => row['selected'] === true);
+        const doc = new jsPDF({ unit: 'in', format: 'letter' }); // 8.5 x 11 inches
+        const cardSize = 1.6; // 1.6 inches
+        const margin = 0.3; // 0.3 inch margin between cards for easier cutting
+        const bleed = 0.08; // 0.08 inch bleed
+        const pageWidth = 8.5;
+        const pageHeight = 11;
+        const cardsPerRow = Math.floor((pageWidth - margin) / (cardSize + margin));
+        const cardsPerCol = Math.floor((pageHeight - margin) / (cardSize + margin));
+        const cardsPerPage = cardsPerRow * cardsPerCol;
+        const cardsPerSet = 20; // Process 20 cards at a time
+        const totalSets = Math.ceil(selected.length / cardsPerSet);
+
+        // Helper to get bleed color by rarity
+        const getBleedColor = (rarity: RarityLevel) => {
+            switch (rarity) {
+                case RarityLevel.COMMON: return '#4CAF50'; // Green
+                case RarityLevel.UNCOMMON: return '#FFEB3B'; // Yellow
+                case RarityLevel.RARE: return '#F44336'; // Red
+                case RarityLevel.ULTRA_RARE: return '#9C27B0'; // Purple
+                default: return '#FFFFFF';
+            }
+        };
+
+        // Process each set of 20 cards (or remaining cards)
+        for (let set = 0; set < totalSets; set++) {
+            const startIdx = set * cardsPerSet;
+            const endIdx = Math.min(startIdx + cardsPerSet, selected.length);
+            const cardsInThisSet = endIdx - startIdx;
+            const pagesInSet = Math.ceil(cardsInThisSet / cardsPerPage);
+
+            // Generate front pages for this set
+            for (let p = 0; p < pagesInSet; p++) {
+                if (set > 0 || p > 0) doc.addPage();
+                for (let rowIdx = 0; rowIdx < cardsPerCol; rowIdx++) {
+                    // How many cards in this row?
+                    const isLastRow = (rowIdx === cardsPerCol - 1);
+                    let cardsThisRow = cardsPerRow;
+                    if (isLastRow) {
+                        const remaining = cardsInThisSet - p * cardsPerPage - rowIdx * cardsPerRow;
+                        if (remaining < cardsPerRow) cardsThisRow = remaining;
+                    }
+                    // Left alignment: start at left margin
+                    const xOffset = margin;
+                    for (let colIdx = 0; colIdx < cardsThisRow; colIdx++) {
+                        const i = rowIdx * cardsPerRow + colIdx;
+                        const idx = startIdx + p * cardsPerPage + i;
+                        if (idx >= endIdx) continue;
+                        const x = xOffset + colIdx * (cardSize + margin);
+                        const y = margin + rowIdx * (cardSize + margin);
+                        // Determine rarity and get template
+                        const rarity = this.determineRarityLevel(selected[idx]);
+                        const templatePath = `assets/${rarity}_template.png`;
+                        // Draw bleed rectangle
+                        doc.setFillColor(getBleedColor(rarity));
+                        doc.rect(x - bleed, y - bleed, cardSize + 2 * bleed, cardSize + 2 * bleed, 'F');
+                        // Add template background
+                        doc.addImage(templatePath, 'PNG', x, y, cardSize, cardSize, undefined, 'FAST');
+                        // Add card content
+                        doc.setFontSize(12);
+                        doc.setTextColor(0, 0, 0); // Black text
+                        doc.text(String(selected[idx]['Subject'] || ''), x + cardSize / 2, y + 0.5, { align: 'center' });
+                        doc.setFontSize(10);
+                        doc.text(String(selected[idx]['Year'] || ''), x + cardSize / 2, y + 0.9, { align: 'center' });
+                        doc.setFontSize(14);
+                        doc.text(`#${idx + 1}`, x + cardSize / 2, y + 1.25, { align: 'center' });
+                    }
+                }
+            }
+
+            // Generate back pages for this set
+            for (let p = 0; p < pagesInSet; p++) {
+                doc.addPage();
+                for (let rowIdx = 0; rowIdx < cardsPerCol; rowIdx++) {
+                    // How many cards in this row?
+                    const isLastRow = (rowIdx === cardsPerCol - 1);
+                    let cardsThisRow = cardsPerRow;
+                    if (isLastRow) {
+                        const remaining = cardsInThisSet - p * cardsPerPage - rowIdx * cardsPerRow;
+                        if (remaining < cardsPerRow) cardsThisRow = remaining;
+                    }
+                    // Right alignment: start at right margin
+                    const rowWidth = cardsThisRow * cardSize + (cardsThisRow - 1) * margin;
+                    const xOffset = pageWidth - rowWidth - margin;
+                    for (let colIdx = 0; colIdx < cardsThisRow; colIdx++) {
+                        // Mirror the column index for the back page
+                        const mirroredColIdx = cardsThisRow - 1 - colIdx;
+                        const i = rowIdx * cardsPerRow + colIdx;
+                        const idx = startIdx + p * cardsPerPage + i;
+                        if (idx >= endIdx) continue;
+                        const x = xOffset + mirroredColIdx * (cardSize + margin);
+                        const y = margin + rowIdx * (cardSize + margin);
+                        // Use same template as front
+                        const rarity = this.determineRarityLevel(selected[idx]);
+                        const templatePath = `assets/${rarity}_template.png`;
+                        // Draw bleed rectangle
+                        doc.setFillColor(getBleedColor(rarity));
+                        doc.rect(x - bleed, y - bleed, cardSize + 2 * bleed, cardSize + 2 * bleed, 'F');
+                        // Add template background
+                        doc.addImage(templatePath, 'PNG', x, y, cardSize, cardSize, undefined, 'FAST');
+                        // Add card content
+                        doc.setFontSize(18);
+                        doc.setTextColor(0, 0, 0); // Black text
+                        doc.text(`#${idx + 1}`, x + cardSize / 2, y + cardSize / 2, { align: 'center', baseline: 'middle' });
+                    }
+                }
+            }
+        }
+        doc.save('coin_id_cards.pdf');
     }
 }
