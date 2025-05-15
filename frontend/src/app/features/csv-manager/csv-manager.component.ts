@@ -202,42 +202,49 @@ export class CsvManagerComponent {
         this.allSelected = data.length > 0 && data.every(row => row['selected'] === true);
     }
 
-    private determineRarityLevel(coin: CsvData): RarityLevel {
-        // Extract values, handling potential missing or invalid data
+    // Helper to calculate nuanced rarity score for a coin
+    private calculateRarityScore(coin: CsvData): number {
         const year = parseInt(String(coin['Year'] || '0'));
         const usdValue = parseFloat(String(coin['USD (CoinSnap)'] || '0').replace(/[^0-9.]/g, ''));
         const grading = String(coin['Grading'] || '').toUpperCase();
-
-        // Initialize score
+        const denomination = String(coin['Denomination'] || '').toLowerCase();
+        const mintmark = String(coin['Mintmark'] || '').toLowerCase();
+        const subject = String(coin['Subject'] || '').toLowerCase();
         let rarityScore = 0;
-
-        // Year-based scoring (older coins are rarer)
-        if (year < 1900) rarityScore += 3;
-        else if (year < 1950) rarityScore += 2;
-        else if (year < 2000) rarityScore += 1;
-
+        // Year-based scoring
+        if (year > 0 && year < 1850) rarityScore += 3;
+        else if (year >= 1850 && year < 1900) rarityScore += 2;
+        else if (year >= 1900 && year < 1950) rarityScore += 1;
         // USD Value-based scoring (CoinSnap)
-        if (usdValue > 30) rarityScore += 3;
-        else if (usdValue > 20) rarityScore += 2;
-        else if (usdValue > 10) rarityScore += 1;
-
+        if (usdValue > 100) rarityScore += 3;
+        else if (usdValue > 50) rarityScore += 2;
+        else if (usdValue > 20) rarityScore += 1;
         // Grading-based scoring
-        if (grading.includes('MS') || grading.includes('PF')) {
-            if (grading.includes('70') || grading.includes('69')) rarityScore += 3;
-            else if (grading.includes('68') || grading.includes('67')) rarityScore += 2;
-            else if (grading.includes('66') || grading.includes('65')) rarityScore += 1;
-        }
-
-        // Determine rarity level based on total score
-        if (rarityScore >= 6) return RarityLevel.ULTRA_RARE;
-        if (rarityScore >= 4) return RarityLevel.RARE;
-        if (rarityScore >= 2) return RarityLevel.UNCOMMON;
-        return RarityLevel.COMMON;
+        if (grading.includes('70')) rarityScore += 3;
+        else if (grading.match(/6[56789]/) || grading.includes('PF65') || grading.includes('PF66') || grading.includes('PF67') || grading.includes('PF68') || grading.includes('PF69')) rarityScore += 2;
+        else if (grading.includes('AU') || grading.includes('UNC') || grading.includes('BU')) rarityScore += 1;
+        // Denomination-based scoring
+        if (denomination.includes('dollar')) rarityScore += 1;
+        // Mintmark-based scoring
+        if (mintmark && mintmark !== 'no mintmark') rarityScore += 1;
+        // Subject-based scoring
+        if (subject.includes('morgan') || subject.includes('liberty')) rarityScore += 1;
+        // Log the parsed values and score for debugging
+        console.log('Parsed coin:', coin, { year, usdValue, grading, denomination, mintmark, subject, rarityScore });
+        return rarityScore;
     }
 
     generatePDF() {
         // Only include selected coins
         const selected = this.selectedCsvData.filter(row => row['selected'] === true);
+        // Calculate rarity scores for all selected coins
+        const scores = selected.map(row => this.calculateRarityScore(row));
+        // New thresholds
+        const ULTRA_RARE_THRESHOLD = 7;
+        const RARE_THRESHOLD = 5;
+        const UNCOMMON_THRESHOLD = 3;
+        // Log all scores for debugging
+        console.log('All rarity scores:', scores);
         const doc = new jsPDF({ unit: 'in', format: 'letter' }); // 8.5 x 11 inches
         const cardSize = 1.6; // 1.6 inches
         const margin = 0.3; // 0.3 inch margin between cards for easier cutting
@@ -259,6 +266,18 @@ export class CsvManagerComponent {
                 case RarityLevel.ULTRA_RARE: return '#9C27B0'; // Purple
                 default: return '#FFFFFF';
             }
+        };
+
+        // Helper to determine rarity level for a given index
+        const determineRarityLevelForIndex = (score: number, idx: number): RarityLevel => {
+            let rarity: RarityLevel;
+            if (score >= ULTRA_RARE_THRESHOLD) rarity = RarityLevel.ULTRA_RARE;
+            else if (score >= RARE_THRESHOLD) rarity = RarityLevel.RARE;
+            else if (score >= UNCOMMON_THRESHOLD) rarity = RarityLevel.UNCOMMON;
+            else rarity = RarityLevel.COMMON;
+            // Log the rarity assignment for debugging
+            console.log('Rarity assignment:', { idx, score, rarity });
+            return rarity;
         };
 
         // Process each set of 20 cards (or remaining cards)
@@ -288,7 +307,8 @@ export class CsvManagerComponent {
                         const x = xOffset + colIdx * (cardSize + margin);
                         const y = margin + rowIdx * (cardSize + margin);
                         // Determine rarity and get template
-                        const rarity = this.determineRarityLevel(selected[idx]);
+                        const score = scores[idx];
+                        const rarity = determineRarityLevelForIndex(score, idx);
                         const templatePath = `assets/${rarity}_template.png`;
                         // Draw bleed rectangle
                         doc.setFillColor(getBleedColor(rarity));
@@ -330,7 +350,8 @@ export class CsvManagerComponent {
                         const x = xOffset + mirroredColIdx * (cardSize + margin);
                         const y = margin + rowIdx * (cardSize + margin);
                         // Use same template as front
-                        const rarity = this.determineRarityLevel(selected[idx]);
+                        const score = scores[idx];
+                        const rarity = determineRarityLevelForIndex(score, idx);
                         const templatePath = `assets/${rarity}_template.png`;
                         // Draw bleed rectangle
                         doc.setFillColor(getBleedColor(rarity));
